@@ -1,60 +1,57 @@
 # ============================================================
 # GITHUB ACTIONS - COMPILADOR AUTOMÁTICO DE APK
-# Cada vez que subes código, genera un APK listo para descargar
+# Versión corregida - Junio 2026
 # ============================================================
 
 name: 📱 Generar APK Automático
 
-# Cuándo se ejecuta: cada vez que subes código a main
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Permite ejecutarlo manualmente desde GitHub
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     
     steps:
-      # Paso 1: Descargar el código del repositorio
       - name: 📥 Descargar código
         uses: actions/checkout@v4
-      
-      # Paso 2: Configurar Python
+
       - name: 🐍 Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-      
-      # Paso 3: Instalar dependencias
-      - name: 📦 Instalar dependencias
+          python-version: '3.11'
+
+      - name: 📦 Instalar dependencias del sistema
         run: |
           sudo apt update
-          sudo apt install -y python3-pip openjdk-17-jdk git zip unzip autoconf libtool
+          sudo apt install -y python3-pip openjdk-21-jdk git zip unzip autoconf libtool libffi-dev libssl-dev
+          pip install --upgrade pip setuptools wheel
+
+      - name: 📦 Instalar dependencias Python
+        run: |
           pip install buildozer cython kivy plyer
-      
-      # Paso 4: Crear archivo buildozer.spec (configuración del APK)
+
       - name: ⚙️ Configurar Buildozer
         run: |
           buildozer init
-          # Modificar el archivo .spec para nuestro proyecto
-          sed -i 's/^title = .*/title = Calculadora Aumentos Descuentos/' buildozer.spec
-          sed -i 's/^package.name = .*/package.name = calculadoraporcentajes/' buildozer.spec
+          sed -i 's/^title = .*/title = Calculadora Aumentos/' buildozer.spec
+          sed -i 's/^package.name = .*/package.name = calculadorap/' buildozer.spec
           sed -i 's/^package.domain = .*/package.domain = org.educacion/' buildozer.spec
           sed -i 's/^requirements = .*/requirements = python3,kivy,plyer/' buildozer.spec
           sed -i 's/^orientation = .*/orientation = portrait/' buildozer.spec
           sed -i 's/^fullscreen = .*/fullscreen = 0/' buildozer.spec
           sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
-          sed -i 's/^# android.api = .*/android.api = 30/' buildozer.spec
-          sed -i 's/^# android.minapi = .*/android.minapi = 21/' buildozer.spec
-          echo "✅ buildozer.spec configurado"
-      
-      # Paso 5: Compilar el APK
+          sed -i 's/^# android.api = .*/android.api = 34/' buildozer.spec
+          sed -i 's/^# android.minapi = .*/android.minapi = 24/' buildozer.spec
+          echo "✅ Configuración completada"
+
       - name: 🔨 Compilar APK
         run: |
           buildozer -v android debug
-      
-      # Paso 6: Guardar el APK como "artefacto" (descargable)
+        timeout-minutes: 30
+
       - name: 📦 Guardar APK
         uses: actions/upload-artifact@v4
         with:
